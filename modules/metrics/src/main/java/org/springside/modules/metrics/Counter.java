@@ -18,14 +18,16 @@ import org.springside.modules.metrics.utils.Clock;
 public class Counter {
 	public static Clock clock = Clock.DEFAULT;
 
-	private AtomicLong counter = new AtomicLong(0);
+	public CounterMetric latestMetric;
 
-	private long totalCount = 0L;
+	private AtomicLong counter;
+
+	private long totalCount;
 	private long startTime;
 	private long lastReportTime;
 
 	public Counter() {
-		lastReportTime = clock.getCurrentTime();
+		reset();
 	}
 
 	public void inc() {
@@ -45,30 +47,41 @@ public class Counter {
 	}
 
 	public CounterMetric calculateMetric() {
-		long lastCount = counter.getAndSet(0);
+		long latestCount = counter.getAndSet(0);
 		long currentTime = clock.getCurrentTime();
 
 		CounterMetric metric = new CounterMetric();
 
-		totalCount += lastCount;
+		totalCount += latestCount;
 		long totalElapsed = currentTime - startTime;
 		metric.meanRate = (totalCount * 1000) / totalElapsed;
 
-		metric.lastCount = lastCount;
+		metric.latestCount = latestCount;
 		metric.totalCount = totalCount;
 
 		long elapsed = currentTime - lastReportTime;
 		if (elapsed > 0) {
-			metric.lastRate = (lastCount * 1000) / elapsed;
+			metric.latestRate = (latestCount * 1000) / elapsed;
 		}
 
 		lastReportTime = currentTime;
+
+		latestMetric = metric;
+
 		return metric;
+	}
+
+	public void reset() {
+		latestMetric = new CounterMetric();
+		counter = new AtomicLong(0);
+		totalCount = 0L;
+		startTime = clock.getCurrentTime();
+		lastReportTime = startTime;
 	}
 
 	@Override
 	public String toString() {
-		return "Counter [counter=" + counter + ", totalCount=" + totalCount + ", startTime=" + startTime
-				+ ", lastReportTime=" + lastReportTime + "]";
+		return "Counter [latestMetric=" + latestMetric + ", counter=" + counter + ", totalCount=" + totalCount
+				+ ", startTime=" + startTime + ", lastReportTime=" + lastReportTime + "]";
 	}
 }

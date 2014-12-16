@@ -48,15 +48,15 @@ public class MetricRegistryTest {
 	public void execution() {
 		MetricRegistry metricRegistry = new MetricRegistry();
 
-		Execution execution = metricRegistry.execution(MetricRegistry.name("UserService", "getUser.execution"));
+		Timer execution = metricRegistry.timer(MetricRegistry.name("UserService", "getUser.execution"));
 		assertThat(execution).isNotNull();
 
-		Map<String, Execution> executions = metricRegistry.getExecutions();
+		Map<String, Timer> executions = metricRegistry.getTimers();
 
-		Execution execution2 = executions.get("UserService.getUser.execution");
+		Timer execution2 = executions.get("UserService.getUser.execution");
 		assertThat(execution2).isNotNull().isSameAs(execution);
 
-		Execution execution3 = metricRegistry.execution(MetricRegistry.name("UserService", "getUser.execution"));
+		Timer execution3 = metricRegistry.timer(MetricRegistry.name("UserService", "getUser.execution"));
 		assertThat(execution3).isNotNull().isSameAs(execution);
 	}
 
@@ -76,16 +76,6 @@ public class MetricRegistryTest {
 
 		assertThat(metric.pcts.get(60d)).isEqualTo(60);
 		assertThat(metric.pcts.get(70d)).isEqualTo(70);
-
-		// default 90
-		Histogram histogramWithDefaultPcts = metricRegistry.histogram(MetricRegistry.name("UserService",
-				"getUser.histogram.default"));
-		for (int i = 1; i <= 100; i++) {
-			histogramWithDefaultPcts.update(i);
-		}
-
-		metric = histogramWithDefaultPcts.calculateMetric();
-		assertThat(metric.pcts.get(90d)).isEqualTo(90);
 
 		// new default 50
 		metricRegistry.setDefaultPcts(new Double[] { 50d });
